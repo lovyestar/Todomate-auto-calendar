@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Todomate Auto Calendar</title>
+<title>투두메이트 캘린더</title>
 <meta name="description" content="투두메이트 할 일을 내 캘린더에서 불러와요. 한 번만 연결하면 아이폰·맥·갤럭시 캘린더에 자동으로 떠요.">
-<meta property="og:title" content="Todomate Auto Calendar">
+<meta property="og:title" content="투두메이트 캘린더">
 <meta property="og:description" content="투두메이트 할 일을 내 캘린더에서 불러와요.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#f4efe4">
@@ -28,19 +28,22 @@
   --g-study: #3d5a80;
   --g-work: #7a7a2e;
   --g-life: #8a5a8c;
-  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --mono: var(--font);
+  --r: 10px;
+  --r-sm: 6px;
   color-scheme: light;
 }
-* { box-sizing: border-box; border-radius: 0; }
+* { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
-  font: 16px/1.6 "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  font: 16px/1.6 var(--font); font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased; word-break: keep-all;
 }
 a { color: inherit; text-underline-offset: 3px; }
-button, input { font: inherit; color: inherit; }
+button, input, textarea, select { font-family: var(--font); color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .frame { max-width: 1680px; margin: 0 auto; padding: 0 48px; }
@@ -48,7 +51,7 @@ button, input { font: inherit; color: inherit; }
 /* header */
 .top { display: flex; align-items: center; justify-content: space-between; height: 72px; border-bottom: 1px solid var(--line); }
 .mark { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 700; letter-spacing: -0.01em; }
-.mark i { display: block; width: 14px; height: 14px; background: var(--ink); }
+.mark i { display: block; width: 14px; height: 14px; background: var(--ink); border-radius: 4px; }
 .top nav { display: flex; gap: 28px; font-size: 14px; color: var(--ink-2); }
 .top nav a { text-decoration: none; }
 .top nav a:hover { text-decoration: underline; }
@@ -60,7 +63,7 @@ h1 { font-size: clamp(36px, 4.6vw, 68px); line-height: 1.12; letter-spacing: -0.
 .lead { font-size: clamp(16px, 1.4vw, 19px); color: var(--ink-2); margin: 0 0 48px; max-width: 34em; }
 
 /* week preview */
-.week { border: 1px solid var(--line-strong); background: var(--white); }
+.week { border: 1px solid var(--line-strong); background: var(--white); border-radius: var(--r); overflow: hidden; }
 .week-head { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 16px; border-bottom: 1px solid var(--line-strong); }
 .week-head b { font-size: 15px; }
 .week-head span { font-family: var(--mono); font-size: 12px; color: var(--muted); }
@@ -69,8 +72,8 @@ h1 { font-size: clamp(36px, 4.6vw, 68px); line-height: 1.12; letter-spacing: -0.
 .col:last-child { border-right: 0; }
 .col .d { font-family: var(--mono); font-size: 12px; color: var(--muted); margin: 0 2px 8px; display: flex; justify-content: space-between; }
 .col.today { background: var(--paper); }
-.col.today .d b { background: var(--ink); color: var(--white); padding: 0 5px; font-weight: 500; }
-.ev { font-size: 12px; line-height: 1.35; padding: 5px 6px; margin-bottom: 4px; border-left: 3px solid var(--c); background: color-mix(in srgb, var(--c) 10%, var(--white)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col.today .d b { background: var(--ink); color: var(--white); padding: 0 5px; font-weight: 500; border-radius: 4px; }
+.ev { font-size: 12px; line-height: 1.35; padding: 5px 6px; margin-bottom: 4px; border-left: 3px solid var(--c); background: color-mix(in srgb, var(--c) 10%, var(--white)); border-radius: 0 4px 4px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ev time { display: block; font-family: var(--mono); font-size: 10px; color: var(--muted); }
 .ev.sel { outline: 1px solid var(--ink); outline-offset: -1px; }
 .week-foot { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line-strong); }
@@ -78,14 +81,14 @@ h1 { font-size: clamp(36px, 4.6vw, 68px); line-height: 1.12; letter-spacing: -0.
 .legend p, .detail p.k { font-family: var(--mono); font-size: 11px; color: var(--muted); margin: 0 0 8px; letter-spacing: 0.02em; }
 .legend ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 13px; }
 .legend li { display: flex; align-items: center; gap: 8px; }
-.legend li::before { content: ""; width: 10px; height: 10px; background: var(--c); }
+.legend li::before { content: ""; width: 10px; height: 10px; background: var(--c); border-radius: 3px; }
 .detail { padding: 14px 16px; }
 .detail h4 { margin: 0 0 2px; font-size: 15px; }
 .detail .meta { font-size: 12px; color: var(--muted); margin: 0 0 8px; }
 .detail .memo { font-size: 13px; color: var(--ink-2); border-left: 2px solid var(--line); padding-left: 10px; margin: 0; white-space: pre-line; }
 
 /* tool panel */
-.panel { background: var(--paper); border: 1px solid var(--line-strong); position: sticky; top: 24px; }
+.panel { background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--r); position: sticky; top: 24px; }
 .sec { padding: 24px 28px; border-bottom: 1px solid var(--line); }
 .sec:last-child { border-bottom: 0; }
 .sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
@@ -96,17 +99,17 @@ h1 { font-size: clamp(36px, 4.6vw, 68px); line-height: 1.12; letter-spacing: -0.
 label.f { display: block; margin-bottom: 14px; }
 label.f > span { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
 .in { position: relative; }
-.in input { width: 100%; height: 46px; padding: 0 14px; border: 1px solid var(--line); background: var(--white); font-size: 16px; }
+.in input { width: 100%; height: 46px; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--white); font-size: 16px; }
 .in input:focus { outline: none; border-color: var(--ink); }
-.in .show { position: absolute; right: 0; top: 0; height: 46px; padding: 0 14px; border: 0; border-left: 1px solid var(--line); background: transparent; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.in .show { position: absolute; right: 0; top: 0; height: 46px; padding: 0 14px; border: 0; border-left: 1px solid var(--line); border-radius: 0 var(--r-sm) var(--r-sm) 0; background: transparent; font-size: 13px; color: var(--ink-2); cursor: pointer; }
 
 .opt { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; font-size: 15px; cursor: pointer; }
-.opt input { appearance: none; -webkit-appearance: none; flex: none; width: 18px; height: 18px; margin: 3px 0 0; border: 1px solid var(--ink); background: var(--white); cursor: pointer; display: grid; place-items: center; }
+.opt input { appearance: none; -webkit-appearance: none; flex: none; width: 18px; height: 18px; margin: 3px 0 0; border: 1px solid var(--ink); border-radius: 4px; background: var(--white); cursor: pointer; display: grid; place-items: center; }
 .opt input:checked { background: var(--ink); }
 .opt input:checked::after { content: ""; width: 9px; height: 5px; border: 2px solid var(--white); border-top: 0; border-right: 0; transform: translateY(-1px) rotate(-45deg); }
 .opt small { display: block; font-size: 13px; color: var(--muted); }
 .label { font-size: 13px; font-weight: 600; margin: 18px 0 8px; }
-.seg { display: grid; grid-template-columns: repeat(6, 1fr); border: 1px solid var(--line); background: var(--white); }
+.seg { display: grid; grid-template-columns: repeat(6, 1fr); border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; background: var(--white); }
 .seg label { position: relative; border-right: 1px solid var(--line); }
 .seg label:last-child { border-right: 0; }
 .seg input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
@@ -115,7 +118,7 @@ label.f > span { display: block; font-size: 13px; font-weight: 600; margin-botto
 .seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -2px; }
 .hint { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
 
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; padding: 0 18px; border: 1px solid var(--ink); background: var(--white); color: var(--ink); font-weight: 600; font-size: 15px; text-decoration: none; cursor: pointer; white-space: nowrap; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; padding: 0 18px; border: 1px solid var(--ink); background: var(--white); color: var(--ink); font-weight: 600; font-size: 15px; text-decoration: none; cursor: pointer; white-space: nowrap; border-radius: var(--r-sm); }
 .btn:hover { background: var(--tint); }
 .btn.solid { background: var(--ink); color: var(--white); }
 .btn.solid:hover { background: #000; }
@@ -128,14 +131,14 @@ label.f > span { display: block; font-size: 13px; font-weight: 600; margin-botto
 .note { font-size: 13px; color: var(--muted); margin: 14px 0 0; }
 
 .who { font-size: 15px; display: flex; align-items: center; gap: 10px; }
-.who::before { content: ""; width: 8px; height: 8px; background: var(--g-work); }
+.who::before { content: ""; width: 8px; height: 8px; background: var(--g-work); border-radius: 50%; }
 
-.url { display: flex; border: 1px solid var(--line); background: var(--white); margin-bottom: 18px; }
+.url { display: flex; border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; background: var(--white); margin-bottom: 18px; }
 .url input { flex: 1; min-width: 0; border: 0; padding: 0 12px; height: 40px; font: 12px var(--mono); background: transparent; color: var(--ink-2); }
 .url button { border: 0; border-left: 1px solid var(--line); background: var(--white); padding: 0 14px; font-size: 13px; cursor: pointer; }
 .url button:hover { background: var(--tint); }
 
-.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); margin-bottom: 16px; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; margin-bottom: 16px; }
 .tab { border: 0; border-right: 1px solid var(--line); background: var(--white); padding: 9px 4px; font-size: 13px; cursor: pointer; color: var(--ink-2); }
 .tab:last-child { border-right: 0; }
 .tab[aria-selected=true] { background: var(--ink); color: var(--white); }
@@ -196,14 +199,14 @@ footer a { color: var(--ink); }
 </head>
 <body>
 <header class="frame top">
-  <a class="mark" href="/"><i aria-hidden="true"></i>Todomate Auto Calendar</a>
+  <a class="mark" href="/"><i aria-hidden="true"></i>투두메이트 캘린더</a>
   <nav aria-label="주요"><a href="#connect">연결</a><a href="#info">안내</a><a href="https://github.com/lovyestar/Todomate-auto-calendar" target="_blank" rel="noopener">GitHub</a></nav>
 </header>
 
 <main class="frame">
   <div class="main">
     <div>
-      <h1>투두메이트 할 일을<br>내 캘린더에서 불러와</h1>
+      <h1>투두메이트 할 일을<br>내 캘린더에서 불러와요</h1>
       <p class="lead">한 번만 연결하면 투두메이트에 적은 할 일이 내 캘린더에 자동으로 떠요. 지난 할 일 기록까지 함께 볼 수 있어요.</p>
 
       <figure class="week" aria-label="캘린더에 표시되는 모습 예시" style="margin:0">
@@ -367,7 +370,7 @@ footer a { color: var(--ink); }
 
 <footer>
   <div class="frame">
-    <span>made by <a href="https://github.com/lovyestar" target="_blank" rel="noopener">lovyestar</a></span>
+    <span>Made By <a href="https://github.com/lovyestar" target="_blank" rel="noopener">lovyestar</a></span>
     <span><a href="https://github.com/lovyestar/Todomate-auto-calendar" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/eheka78/todomate-api" target="_blank" rel="noopener">todomate-api</a></span>
   </div>
 </footer>
