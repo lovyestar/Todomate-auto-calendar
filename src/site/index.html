@@ -8,21 +8,21 @@
 <meta property="og:title" content="투두메이트 캘린더">
 <meta property="og:description" content="투두메이트 할 일을 내 캘린더에서 불러와요.">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#f4efe4">
+<meta name="theme-color" content="#faf8f3">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="/site.webmanifest">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 :root {
-  --bg: #f4efe4;
-  --paper: #fbf8f1;
+  --bg: #faf8f3;
+  --paper: #fefdfb;
   --white: #ffffff;
   --ink: #1d1b17;
   --ink-2: #4a453c;
   --muted: #7a7366;
-  --line: #d9d0bd;
+  --line: #e4ddcf;
   --line-strong: #1d1b17;
-  --tint: #ece5d6;
+  --tint: #f3efe6;
   --accent: #b5532c;
   --g-run: #b5532c;
   --g-study: #3d5a80;
@@ -323,7 +323,7 @@ footer a { color: var(--ink); }
 
       <div class="sec" id="sec-goals" hidden>
         <div class="sec-h"><h2><small>03</small>목표별로 따로 추가</h2></div>
-        <p class="hint" style="margin:0 0 14px">원하는 목표만 골라 추가하면 그 목표의 할 일만 들어와요. 캘린더 앱에서 목표마다 색을 다르게 정할 수 있어요.</p>
+        <p class="hint" style="margin:0 0 14px">원하는 목표만 골라 추가하면 그 목표의 할 일만 들어와요. 추가 버튼은 위에서 고른 기기에 맞춰 열려요.</p>
         <ul class="goals" id="goal-list"></ul>
       </div>
 
@@ -427,9 +427,20 @@ footer a { color: var(--ink); }
   const iPadOS = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
   const defaultTab = /iPhone|iPad|iPod/.test(ua) || iPadOS ? "ios" : /Android/.test(ua) ? "galaxy" : /Macintosh/.test(ua) ? "mac" : "ios";
   const tabs = $$(".tab");
+  let currentTab = defaultTab;
+  // Goal "추가" buttons follow the selected device: webcal for Apple/ICSx⁵, a Google link for Google.
+  const applyTargets = () => {
+    const google = currentTab === "google";
+    $$("a[data-webcal]").forEach((a) => {
+      a.href = google ? a.dataset.google : a.dataset.webcal;
+      if (google) { a.target = "_blank"; a.rel = "noopener"; } else { a.removeAttribute("target"); a.removeAttribute("rel"); }
+    });
+  };
   const selectTab = (name) => {
+    currentTab = name;
     tabs.forEach((t) => { const on = t.dataset.tab === name; t.setAttribute("aria-selected", String(on)); t.tabIndex = on ? 0 : -1; });
     $$("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== name; });
+    applyTargets();
   };
   tabs.forEach((t, i) => {
     t.addEventListener("click", () => selectTab(t.dataset.tab));
@@ -496,12 +507,12 @@ footer a { color: var(--ink); }
     list.replaceChildren(...goals.map((g) => {
       const copyBtn = el("button", { className: "btn sm", type: "button", textContent: "복사" });
       copyBtn.addEventListener("click", () => copy(g.feedUrl, copyBtn));
-      return el("li", {},
-        el("span", { className: "name", textContent: g.title, title: g.title }),
-        el("a", { className: "btn sm solid", href: g.webcalUrl, textContent: "추가" }),
-        el("a", { className: "btn sm", href: g.googleUrl, target: "_blank", rel: "noopener", textContent: "Google" }),
-        copyBtn);
+      const add = el("a", { className: "btn sm solid", textContent: "추가" });
+      add.dataset.webcal = g.webcalUrl;
+      add.dataset.google = g.googleUrl;
+      return el("li", {}, el("span", { className: "name", textContent: g.title, title: g.title }), add, copyBtn);
     }));
+    applyTargets();
   }
 
   function show(data, email) {

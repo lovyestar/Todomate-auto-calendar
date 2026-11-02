@@ -16,7 +16,7 @@ export const MANIFEST = JSON.stringify({
   short_name: "투두메이트 캘린더",
   start_url: "/",
   display: "standalone",
-  background_color: "#f4efe4",
-  theme_color: "#f4efe4",
+  background_color: "#faf8f3",
+  theme_color: "#faf8f3",
   icons: [{ src: "/favicon.svg", sizes: "any", type: "image/svg+xml" }],
 });
