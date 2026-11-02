@@ -37,6 +37,8 @@ export type BuildInput = {
   readonly refreshMinutes: number;
   readonly calendarName?: string;
   readonly timezone?: string;
+  /** Only include todos of this goal (a per-goal calendar). */
+  readonly goalId?: string;
 };
 
 const TIMED_EVENT_MINUTES = 30;
@@ -53,7 +55,7 @@ export function buildCalendar(input: BuildInput): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//todomate-calendar//KO",
+    "PRODID:-//Todomate-auto-calendar//KO",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${escapeText(input.calendarName ?? "투두메이트")}`,
@@ -95,19 +97,15 @@ function todoToEvent(
   stamp: string,
 ): { uid: string; lines: string[] } | null {
   if (typeof todo.id !== "string" || typeof todo.date !== "number") return null;
+  if (input.goalId !== undefined && todo.goalID !== input.goalId) return null;
+  if (todo.isDone === true && input.options.hideDone) return null;
   const content = typeof todo.content === "string" && todo.content.trim() !== "" ? todo.content : "(내용 없음)";
-  const done = todo.isDone === true;
-  if (done && input.options.hideDone) return null;
 
+  // Plain list: no done marks. A per-goal calendar is already one goal, so no tag there.
   const goal = typeof todo.goalID === "string" ? goalTitles.get(todo.goalID) : undefined;
-  const prefix = done ? "✅ " : "";
-  const goalTag = input.options.showGoal && goal ? `[${goal}] ` : "";
-  const summary = `${prefix}${goalTag}${content}`;
-
-  const details: string[] = [];
-  if (goal) details.push(`목표: ${goal}`);
-  details.push(`상태: ${done ? "완료" : "미완료"}`);
-  if (typeof todo.memo === "string" && todo.memo.trim() !== "") details.push("", todo.memo);
+  const goalTag = input.options.showGoal && goal && input.goalId === undefined ? `[${goal}] ` : "";
+  const summary = `${goalTag}${content}`;
+  const memo = typeof todo.memo === "string" ? todo.memo.trim() : "";
 
   const uid = `${todo.id}@${input.host}`;
   const lines = ["BEGIN:VEVENT", `UID:${uid}`, `DTSTAMP:${stamp}`];
@@ -125,7 +123,8 @@ function todoToEvent(
   const modified = [todo.doneTime, todo.createTime].find((v): v is number => typeof v === "number" && v > 0);
   if (modified !== undefined) lines.push(`LAST-MODIFIED:${formatUtc(Math.min(modified, input.now))}`);
 
-  lines.push(`SUMMARY:${escapeText(summary)}`, `DESCRIPTION:${escapeText(details.join("\n"))}`);
+  lines.push(`SUMMARY:${escapeText(summary)}`);
+  if (memo !== "") lines.push(`DESCRIPTION:${escapeText(memo)}`);
   if (goal) lines.push(`CATEGORIES:${escapeText(goal)}`);
   lines.push("TRANSP:TRANSPARENT", "STATUS:CONFIRMED", "END:VEVENT");
   return { uid, lines };

@@ -1,9 +1,10 @@
-// POST /api/connect, POST /api/disconnect
+// POST /api/connect, POST /api/disconnect, GET /api/goals/<feedId>
 
 import { type Env, loadConfig, parseHistoryDays } from "./config.ts";
 import { decrypt, encrypt, randomId } from "./crypto.ts";
 import { purgeFeedCache } from "./feed.ts";
 import { apiError, clientIp, json } from "./http.ts";
+import type { Goal } from "./ics.ts";
 import { type FeedRecord, FeedStore } from "./store.ts";
 import { type LoginResult, TodomateApi, TodomateApiError } from "./todomate.ts";
 
@@ -49,16 +50,50 @@ export async function handleConnect(request: Request, env: Env, ctx: ExecutionCo
     ctx.waitUntil(discardToken(env, existing.tokenEnc));
   }
 
-  const feedUrl = `${url.origin}/feed/${record.id}.ics`;
-  const webcalUrl = feedUrl.replace(/^https?:/, "webcal:");
+  const goals = await apiFor(env)
+    .goals(session.token)
+    .catch(() => [] as Goal[]);
   return json({
-    feedUrl,
-    webcalUrl,
-    googleUrl: `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`,
+    ...links(url.origin, record.id),
+    goals: goalLinks(url.origin, record.id, goals),
     expiresAt: record.expiresAt,
     options: record.options,
     reused: keep,
   });
+}
+
+/** Per-goal calendar links for the site. The feed id itself is the credential. */
+export async function handleGoals(request: Request, id: string, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const record = await new FeedStore(env.FEEDS).get(id);
+  if (!record) return apiError("연결 정보를 찾을 수 없어요. 다시 연결해 주세요.", 404);
+  try {
+    const goals = await apiFor(env).goals(await decrypt(env.TOKEN_ENCRYPTION_KEY, record.tokenEnc));
+    return json({ goals: goalLinks(url.origin, id, goals), expiresAt: record.expiresAt });
+  } catch (error) {
+    if (error instanceof TodomateApiError && error.status === 401) {
+      return apiError("연결이 만료됐어요. 다시 연결해 주세요.", 401);
+    }
+    console.error("goals failed", error instanceof Error ? error.message : error);
+    return apiError("목표 목록을 불러오지 못했어요.", 502);
+  }
+}
+
+function links(origin: string, id: string, goalId?: string) {
+  const path = goalId === undefined ? `${id}.ics` : `${id}/${encodeURIComponent(goalId)}.ics`;
+  const feedUrl = `${origin}/feed/${path}`;
+  const webcalUrl = feedUrl.replace(/^https?:/, "webcal:");
+  return {
+    feedUrl,
+    webcalUrl,
+    googleUrl: `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`,
+  };
+}
+
+function goalLinks(origin: string, id: string, goals: readonly Goal[]) {
+  return goals
+    .filter((g): g is { id: string; title: string } => typeof g.id === "string" && typeof g.title === "string")
+    .map((g) => ({ id: g.id, title: g.title, ...links(origin, id, g.id) }));
 }
 
 export async function handleDisconnect(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {

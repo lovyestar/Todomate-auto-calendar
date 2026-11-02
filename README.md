@@ -1,123 +1,156 @@
-# 투두메이트 캘린더
+# Todomate Auto Calendar
 
-투두메이트 할 일을 **구독 캘린더(.ics)** 로 만들어 Apple 캘린더 · 삼성 캘린더 · Google 캘린더에 자동으로 띄워 주는 서비스입니다. Cloudflare Workers 위에서 동작합니다.
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020.svg?logo=cloudflare)](https://workers.cloudflare.com)
+[![TypeScript](https://img.shields.io/badge/TypeScript-7.0-3178C6.svg?logo=typescript)](https://www.typescriptlang.org)
+[![Node.js](https://img.shields.io/badge/Node.js-22.18+-339933.svg?logo=nodedotjs)](https://nodejs.org)
+[![CI](https://github.com/lovyestar/Todomate-auto-calendar/actions/workflows/ci.yml/badge.svg)](https://github.com/lovyestar/Todomate-auto-calendar/actions/workflows/ci.yml)
+[![GitHub](https://img.shields.io/github/license/lovyestar/Todomate-auto-calendar)](LICENSE)
+[![Site](https://img.shields.io/badge/site-todomate.yestar.dev-1D1B17.svg)](https://todomate.yestar.dev)
 
-**사이트:** https://todomate.yestar.dev
+### Todomate todos as a subscribable calendar (iCalendar)
 
-> 투두메이트 공식 서비스가 아닌 개인 프로젝트입니다. 비공식 [todomate-api](https://github.com/eheka78/todomate-api)(원본: [3x-haust/todomate-api](https://github.com/3x-haust/todomate-api))를 사용합니다.
+---
 
-## 기능
+* #### Features
+    * 투두메이트 할 일을 구독 캘린더(.ics)로 제공
+    * 목표(카테고리)별 캘린더 분리
+    * 메모 포함, 알림 시간이 있는 할 일은 시간 일정으로 변환
+    * 지난 할 일 최대 2년 + 앞으로 60일
+    * 비밀번호 미저장, 읽기 전용
+* #### Supported calendars
+    * Apple 캘린더 (iPhone, iPad, Mac)
+    * 삼성 캘린더 ([ICSx⁵](https://play.google.com/store/apps/details?id=at.bitfire.icsdroid) 경유)
+    * Google 캘린더
 
-- 투두메이트 계정으로 한 번 연결하면 전용 캘린더 주소(webcal)를 발급
-- 알림 시간이 있는 할 일은 그 시각의 30분 일정, 나머지는 하루 종일 일정
-- 지난 할 일 최대 2년 + 앞으로 60일 포함, 완료한 할 일은 ✅ 표시 또는 숨김
-- 목표 이름 붙이기(`[운동] 러닝 30분`) 선택
-- 같은 계정으로 다시 연결하면 주소는 그대로 유지, 주소 재발급 · 연결 해제 지원
-- 연결 만료 3일 전부터 캘린더에 재연결 알림 일정 표시
+---
 
-### 기기별 반영 속도
+투두메이트에는 캘린더로 내보내는 기능이 없습니다.  
+할 일은 투두메이트에, 약속은 캘린더 앱에 적다 보면 하루 일정을 보기 위해 두 앱을 번갈아 열게 됩니다.
 
-구독 캘린더는 캘린더 앱이 주기적으로 새로 받아 오는(pull) 방식입니다.
+할 일을 캘린더에서도 보고 싶다면 하나씩 옮겨 적는 수밖에 없고, 할 일을 고치거나 완료할 때마다 캘린더도 같이 고쳐야 합니다.
+
+그래서 투두메이트에 적기만 하면 캘린더에도 알아서 들어오는 방법이 필요해졌습니다.
+
+*Todomate Auto Calendar*는 투두메이트 계정을 한 번 연결하면 전용 캘린더 주소를 만들어 주고, 캘린더 앱은 그 주소를 주기적으로 받아 와 할 일을 그대로 보여 줍니다.
+
+---
+
+아래와 같은 할 일이 있다고 생각해봅시다.
+
+* 운동
+    * 아침 러닝 30분 \<메모: 한강 5km>
+* 업무
+    * 주간 회의 준비 \<알림: 09:30>
+
+캘린더에는 다음과 같이 들어갑니다.
+
+```text
+BEGIN:VEVENT
+SUMMARY:[운동] 아침 러닝 30분
+DTSTART;VALUE=DATE:20261102          ← 알림이 없으면 하루 종일 일정
+DESCRIPTION:한강 5km                  ← 메모는 일정의 메모란으로
+CATEGORIES:운동
+END:VEVENT
+
+BEGIN:VEVENT
+SUMMARY:[업무] 주간 회의 준비
+DTSTART:20261102T003000Z             ← 알림 시각에 30분 일정 (09:30 KST)
+DTEND:20261102T010000Z
+CATEGORIES:업무
+END:VEVENT
+```
+
+목표마다 주소가 따로 있어서, 필요한 목표만 골라 구독할 수 있습니다.
+
+```text
+https://todomate.yestar.dev/feed/<id>.ics            전체 할 일
+https://todomate.yestar.dev/feed/<id>/<goalId>.ics   해당 목표의 할 일만
+```
+
+목표별로 구독하면 캘린더 앱에서 목표마다 색을 다르게 정하고 켜고 끌 수 있습니다.
+
+---
+
+### Usage
+
+1. [todomate.yestar.dev](https://todomate.yestar.dev)에서 투두메이트 계정으로 연결합니다.
+2. 기기에 맞는 버튼으로 캘린더에 추가합니다.
 
 | 기기 | 방법 | 반영 주기 |
 | --- | --- | --- |
-| 맥 | 캘린더 구독, 자동 새로고침 5분 | 약 5분 |
-| 아이폰·아이패드 | webcal 구독 (맥에서 iCloud로 추가하면 공유) | iOS가 결정, 당겨서 새로고침 |
-| 갤럭시 | [ICSx⁵](https://play.google.com/store/apps/details?id=at.bitfire.icsdroid) → 삼성 캘린더 | 약 15분 |
-| 구글 캘린더 | URL로 추가 | 몇 시간~하루 |
+| Mac | 캘린더 구독, 자동 새로고침 5분 | 약 5분 |
+| iPhone · iPad | webcal 구독 | iOS가 결정 |
+| Galaxy | ICSx⁵ → 삼성 캘린더 | 약 15분 |
+| Google 캘린더 | URL로 추가 | 수 시간 |
 
-## 구조
+### Structure
 
-```
-브라우저 ──▶ todomate.yestar.dev  (이 저장소 루트: 사이트 + .ics 피드 Worker)
-                 │  service binding
-                 ▼
-            todomate-api.yestar.dev  (./api: todomate-api를 Workers로 실행)
-                 │
-                 ▼
+```text
+browser ──▶ todomate.yestar.dev       사이트 + .ics 피드 (루트)
+                │ service binding
+                ▼
+            todomate-api.yestar.dev   todomate-api를 Workers로 실행 (./api)
+                │
+                ▼
             Firebase Auth / Firestore (투두메이트)
 ```
 
-| 경로 | 설명 |
-| --- | --- |
-| `src/index.ts` | 라우터 (`/`, `/feed/<id>.ics`, `/api/connect`, `/api/disconnect`) |
-| `src/feed.ts` | 캘린더 생성. `/todos/range`를 최대 62일 단위로 나눠 조회하고 3분 캐시, 실패 시 마지막 정상본 또는 최근 날짜를 하루씩 조회 |
-| `src/ics.ts` | iCalendar(RFC 5545) 변환 |
-| `src/account.ts` | 연결 · 해제 (로그인 → 토큰 암호화 저장) |
-| `src/store.ts` | KV 저장소 (`feed:<id>`, `uid:<uid>`) |
-| `src/site/` | 사이트 HTML · 아이콘 · manifest |
-| `api/` | [eheka78/todomate-api](https://github.com/eheka78/todomate-api)를 커밋 고정으로 가져와 Workers에서 실행하는 래퍼 |
+* `src/feed.ts` `/todos/range`를 62일 단위로 나눠 조회, 계정별로 3분 캐시
+* `src/ics.ts` iCalendar(RFC 5545) 변환
+* `src/account.ts` 연결 · 해제 · 목표 목록
+* `src/site/` 사이트
+* `api/` [eheka78/todomate-api](https://github.com/eheka78/todomate-api)를 커밋 고정으로 가져와 실행하는 래퍼
 
-## 보안
+### Self-hosting
 
-[todomate-api 안전 주의사항](https://github.com/3x-haust/todomate-api/blob/main/README.ko.md#안전-주의사항)을 따릅니다.
-
-- 비밀번호는 저장하지 않습니다. 연결할 때 `/auth/login`에 한 번만 보내고 이후에는 session token만 사용합니다.
-- **조회 API만 사용합니다.** 투두 · 알람 쓰기, DM 전송은 호출하지 않습니다(API의 social write도 꺼 둠).
-- session token은 AES-GCM(`TOKEN_ENCRYPTION_KEY`)으로 암호화해 KV에만 보관하며 브라우저 · URL에 노출하지 않습니다.
-- HTTPS 강제, HSTS, CSP, `Referrer-Policy: no-referrer`, 같은 출처 JSON 요청만 허용, 로그인 시도 IP당 분당 5회 제한.
-- 주소 재발급 · 연결 해제 시 기존 token을 버리고 `/auth/logout`을 호출합니다.
-- 피드 주소(`/feed/<32자 랜덤>.ics`)가 곧 읽기 권한이므로 공유하지 않도록 안내합니다.
-
-## 직접 배포하기
-
-필요한 것: Node.js 22.18+, Cloudflare 계정, Cloudflare에 연결된 도메인.
+Cloudflare 계정과 Cloudflare에 연결된 도메인이 필요합니다. 두 `wrangler.toml`의 도메인과 KV id를 바꾼 뒤 진행합니다.
 
 ```bash
-git clone <this repo> && cd todomate-calendar
 npm ci && npm --prefix api ci
 npx wrangler login
 ```
 
-1. **API Worker** (`api/wrangler.toml`의 도메인을 바꾼 뒤)
-
-   ```bash
-   cd api
-   npx wrangler deploy
-   # 투두메이트 웹앱(www.todomate.net)의 공개 Firebase web API key
-   npx wrangler secret put TODOMATE_FIREBASE_API_KEY
-   openssl rand -hex 32 | npx wrangler secret put SESSION_ENCRYPTION_KEY
-   cd ..
-   ```
-
-2. **캘린더 Worker** (`wrangler.toml`의 도메인 · KV id를 바꾼 뒤)
-
-   ```bash
-   npx wrangler kv namespace create FEEDS      # 나온 id를 wrangler.toml에 기록
-   npx wrangler deploy
-   openssl rand -hex 32 | npx wrangler secret put TOKEN_ENCRYPTION_KEY
-   ```
-
-### GitHub Actions
-
-- `CI`: 모든 push/PR에서 타입 체크, 테스트, 두 Worker 빌드(dry run)
-- `Deploy`: `main` push 시 두 Worker 배포. 저장소 변수 `DEPLOY_ENABLED=true`와 시크릿 `CLOUDFLARE_API_TOKEN`(Workers 편집 권한), `CLOUDFLARE_ACCOUNT_ID`를 설정하면 켜집니다. Worker 시크릿은 위 `wrangler secret put`으로 한 번만 넣으면 유지됩니다.
-
-### 설정 (`wrangler.toml` `[vars]`)
-
-| 이름 | 기본값 | 설명 |
-| --- | --- | --- |
-| `FUTURE_DAYS` | `60` | 피드에 포함할 앞으로의 일수 |
-| `CACHE_SECONDS` | `180` | 생성한 캘린더 캐시 시간 |
-| `TIMEZONE` | `Asia/Seoul` | "오늘" 기준 시간대 |
-| `TODOMATE_API_BASE_URL` | `https://todomate-api.yestar.dev` | service binding이 없을 때 쓰는 API 주소 |
-
-API 쪽 `SESSION_TTL_DAYS`(기본 90)는 다시 연결해야 하는 주기입니다.
-
-## 개발
+```bash
+# API
+cd api
+npx wrangler deploy
+npx wrangler secret put TODOMATE_FIREBASE_API_KEY   # www.todomate.net의 공개 Firebase web API key
+openssl rand -hex 32 | npx wrangler secret put SESSION_ENCRYPTION_KEY
+cd ..
+```
 
 ```bash
-npm run check          # 타입 체크 + 테스트
+# 사이트 + 피드
+npx wrangler kv namespace create FEEDS                # 나온 id를 wrangler.toml에 기록
+npx wrangler deploy
+openssl rand -hex 32 | npx wrangler secret put TOKEN_ENCRYPTION_KEY
+```
+
+`main`에 push할 때 자동으로 배포하려면 저장소 변수 `DEPLOY_ENABLED=true`, 시크릿 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`를 설정합니다.
+
+### Development
+
+```bash
+npm run check                                   # 타입 체크 + 테스트
 cp .dev.vars.example .dev.vars && npm run dev
 ```
 
-## 제한 사항
+---
 
-- 비공식 API라 투두메이트가 내부 구조를 바꾸면 동작하지 않을 수 있습니다.
-- `/todos/range`가 실패하면 최근 7일 ~ 앞으로 30일만 하루씩 조회해 보여 줍니다.
-- Workers Free 플랜의 CPU 제한(요청당 10ms) 때문에 "2년" 범위에 할 일이 아주 많으면 피드 생성이 한도에 가까워질 수 있습니다.
-- 카카오톡 톡캘린더는 외부 .ics 구독을 지원하지 않습니다.
+### NOTE
 
-## 라이선스
+* 비밀번호는 저장하지 않습니다. 연결할 때 한 번만 로그인에 쓰고, 받은 session token은 AES-GCM으로 암호화해 KV에 보관합니다.
+* 할 일 · 알람 쓰기, DM 전송 등 쓰기 API는 호출하지 않습니다.
+* 피드 주소가 곧 읽기 권한입니다. 노출됐다면 사이트에서 주소를 새로 발급합니다.
+* 연결은 90일 동안 유지되며, 만료 3일 전부터 캘린더에 재연결 알림 일정이 생깁니다.
+* 투두메이트 내부 구조가 바뀌면 todomate-api와 함께 동작하지 않을 수 있습니다.
+* 카카오톡 톡캘린더는 외부 .ics 구독을 지원하지 않습니다.
+* 라이선스는 MIT입니다.
 
-MIT. 사용하는 todomate-api도 MIT 라이선스입니다.
+### Credits
+
+* **[3x-haust/todomate-api](https://github.com/3x-haust/todomate-api)**
+    * 투두메이트 HTTP API
+* **[eheka78/todomate-api](https://github.com/eheka78/todomate-api)**
+    * 기간별 투두 조회 (`/todos/range`)
+    * Firebase 토큰 재사용

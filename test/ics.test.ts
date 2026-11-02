@@ -40,10 +40,37 @@ test("todo with remindAt becomes a 30 minute timed event", () => {
   assert.match(ics, /DTEND:20261102T010000Z/);
 });
 
-test("done todos are marked or hidden", () => {
+test("done todos are listed plainly (no marks) or hidden", () => {
   const todos = [{ id: "t3", content: "끝", date: Date.UTC(2026, 10, 2), isDone: true }];
-  assert.match(buildCalendar({ ...base, todos }), /SUMMARY:✅ 끝/);
+  const ics = buildCalendar({ ...base, todos });
+  assert.match(ics, /SUMMARY:끝\r\n/);
+  assert.doesNotMatch(ics, /✅|완료/);
   assert.doesNotMatch(buildCalendar({ ...base, todos, options: { hideDone: true, showGoal: true } }), /t3@/);
+});
+
+test("memo becomes the event description; no memo, no description", () => {
+  const ics = buildCalendar({
+    ...base,
+    todos: [
+      { id: "m1", content: "러닝", date: Date.UTC(2026, 10, 2), memo: "한강 5km\n페이스 6분대" },
+      { id: "m2", content: "독서", date: Date.UTC(2026, 10, 2), memo: "  " },
+    ],
+  });
+  assert.ok(ics.includes("DESCRIPTION:한강 5km\\n페이스 6분대\r\n"));
+  assert.equal(ics.match(/DESCRIPTION:/g)?.length, 1);
+});
+
+test("goal calendar keeps only that goal and drops the goal tag", () => {
+  const todos = [
+    { id: "a", content: "러닝", date: Date.UTC(2026, 10, 2), goalID: "g1" },
+    { id: "b", content: "단어", date: Date.UTC(2026, 10, 2), goalID: "g2" },
+    { id: "c", content: "목표 없음", date: Date.UTC(2026, 10, 2) },
+  ];
+  const ics = buildCalendar({ ...base, todos, goalId: "g1", calendarName: "투두메이트 · 운동" });
+  assert.match(ics, /UID:a@/);
+  assert.doesNotMatch(ics, /UID:b@|UID:c@/);
+  assert.match(ics, /SUMMARY:러닝\r\n/);
+  assert.match(ics, /X-WR-CALNAME:투두메이트 · 운동/);
 });
 
 test("invalid records are skipped and duplicates keep the first copy", () => {

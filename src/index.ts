@@ -1,4 +1,4 @@
-import { handleConnect, handleDisconnect } from "./account.ts";
+import { handleConnect, handleDisconnect, handleGoals } from "./account.ts";
 import type { Env } from "./config.ts";
 import { handleFeed } from "./feed.ts";
 import { apiError, isSameOriginJson, json, PAGE_CSP, text, withSecurityHeaders } from "./http.ts";
@@ -7,7 +7,8 @@ import { FAVICON_SVG, MANIFEST, ROBOTS_TXT } from "./site/static.ts";
 
 export type { Env } from "./config.ts";
 
-const FEED_PATH = /^\/feed\/([A-Za-z0-9_-]{16,64})(?:\.ics)?$/;
+const FEED_PATH = /^\/feed\/([A-Za-z0-9_-]{16,64})(?:\/([^/]{1,200}?))?(?:\.ics)?$/;
+const GOALS_PATH = /^\/api\/goals\/([A-Za-z0-9_-]{16,64})$/;
 
 export default {
   async fetch(request, env, ctx): Promise<Response> {
@@ -60,7 +61,17 @@ async function route(request: Request, url: URL, env: Env, ctx: ExecutionContext
     return apiError("서버 설정 오류예요.", 500);
   }
 
-  if (feed && read) return handleFeed(request, feed[1] as string, env, ctx);
+  if (feed && read) {
+    let goalId: string | undefined;
+    try {
+      goalId = feed[2] === undefined ? undefined : decodeURIComponent(feed[2]);
+    } catch {
+      return text("잘못된 주소예요.", 400);
+    }
+    return handleFeed(request, feed[1] as string, goalId, env, ctx);
+  }
+  const goals = pathname.match(GOALS_PATH);
+  if (goals && read) return handleGoals(request, goals[1] as string, env);
 
   if (method === "POST" && (pathname === "/api/connect" || pathname === "/api/disconnect")) {
     if (!isSameOriginJson(request, url)) return apiError("허용되지 않은 요청이에요.", 403);

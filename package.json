@@ -1,5 +1,5 @@
 {
-  "name": "todomate-calendar",
+  "name": "todomate-auto-calendar",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -20,5 +20,10 @@
   "license": "MIT",
   "engines": {
     "node": ">=22.18"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lovyestar/Todomate-auto-calendar.git"
+  },
+  "homepage": "https://todomate.yestar.dev"
 }
