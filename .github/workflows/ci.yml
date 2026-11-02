@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            api/package-lock.json
+
+      - name: Calendar · install
+        run: npm ci
+      - name: Calendar · typecheck
+        run: npm run typecheck
+      - name: Calendar · test
+        run: npm test
+      - name: Calendar · build (dry run)
+        run: npx wrangler deploy --dry-run --outdir dist
+
+      - name: API · install
+        run: npm ci
+        working-directory: api
+      - name: API · build (dry run)
+        run: npx wrangler deploy --dry-run --outdir dist
+        working-directory: api

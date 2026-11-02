@@ -1,0 +1,3 @@
+# Copy to api/.dev.vars for local development (never commit .dev.vars)
+TODOMATE_FIREBASE_API_KEY="todomate-web-firebase-api-key"
+SESSION_ENCRYPTION_KEY="paste-output-of-openssl-rand-hex-32"

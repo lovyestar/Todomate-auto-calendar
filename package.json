@@ -1,0 +1,24 @@
+{
+  "name": "todomate-calendar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "투두메이트 할 일을 Apple·삼성·Google 캘린더 구독 피드(.ics)로 제공하는 Cloudflare Worker",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "npm --prefix api run deploy && wrangler deploy",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261102.1",
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.156.1"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.18"
+  }
+}

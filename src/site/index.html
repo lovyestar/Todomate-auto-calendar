@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>투두메이트 캘린더</title>
+<meta name="description" content="투두메이트 할 일을 아이폰·맥·갤럭시 캘린더에 자동으로 띄워 주는 구독 캘린더. 한 번 연결하면 계속 동기화돼요.">
+<meta property="og:title" content="투두메이트 캘린더">
+<meta property="og:description" content="투두메이트 할 일을 내 캘린더에서 바로 보세요. Apple · 삼성 · Google 캘린더 지원.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#1f9d6b">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root {
+  --bg: #f7f8f6; --bg-soft: #eef1ee; --surface: #ffffff; --text: #17201b; --muted: #5f6b65; --faint: #8b958f;
+  --line: #e2e7e3; --accent: #1f9d6b; --accent-strong: #178257; --accent-ink: #ffffff; --accent-soft: #e3f4ec;
+  --danger: #c43d3d; --danger-soft: #fbeaea; --code: #f1f4f1; --shadow: 0 1px 2px rgba(16,24,20,.04), 0 8px 24px rgba(16,24,20,.06);
+  --g1: #3b82f6; --g2: #f59e0b; --g3: #ec4899; --g4: #1f9d6b;
+  --radius: 18px; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1311; --bg-soft: #151a17; --surface: #1a201d; --text: #e8ece9; --muted: #a0aaa4; --faint: #77827c;
+    --line: #29312d; --accent: #3cc48e; --accent-strong: #5fd6a5; --accent-ink: #062014; --accent-soft: #183427;
+    --danger: #f08080; --danger-soft: #3a1f1f; --code: #212824; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    --g1: #60a5fa; --g2: #fbbf24; --g3: #f472b6; --g4: #3cc48e; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.6;
+  font: 16px/1.6 "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased; word-break: keep-all; }
+a { color: var(--accent-strong); }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+.narrow { max-width: 640px; margin: 0 auto; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* nav */
+nav { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text); text-decoration: none; letter-spacing: -0.01em; }
+.brand img { width: 28px; height: 28px; }
+.nav-links { display: flex; gap: 20px; font-size: 15px; }
+.nav-links a { color: var(--muted); text-decoration: none; }
+.nav-links a:hover { color: var(--text); }
+
+/* hero */
+.hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; padding: 56px 0 72px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--accent-strong);
+  background: var(--accent-soft); padding: 6px 12px; border-radius: 999px; margin-bottom: 20px; }
+h1 { font-size: clamp(34px, 5.2vw, 54px); line-height: 1.18; letter-spacing: -0.035em; margin: 0 0 20px; font-weight: 800; }
+h1 em { font-style: normal; color: var(--accent); }
+.lead { font-size: clamp(16px, 1.8vw, 18px); color: var(--muted); margin: 0 0 32px; max-width: 30em; }
+.cta { display: flex; gap: 12px; flex-wrap: wrap; }
+.apps { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 28px; font-size: 13px; color: var(--muted); }
+.apps span { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; background: var(--surface); }
+
+/* preview */
+.preview { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); padding: 20px; max-width: 420px; justify-self: end; width: 100%; }
+.pv-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+.pv-date { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.pv-cal { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.pv-cal::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.pv-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 16px; text-align: center; font-size: 12px; color: var(--faint); }
+.pv-week b { display: block; font-size: 15px; color: var(--text); font-weight: 600; margin-top: 2px; padding: 4px 0; border-radius: 10px; }
+.pv-week .on b { background: var(--accent); color: var(--accent-ink); }
+.pv-label { font-size: 12px; color: var(--faint); margin: 0 0 6px; }
+.ev { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--bg-soft); margin-bottom: 6px; font-size: 14px; }
+.ev i { width: 4px; align-self: stretch; border-radius: 4px; flex: none; }
+.ev .t { font-size: 12px; color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+.ev.done span { color: var(--muted); }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 20px; border-radius: 12px; border: 1px solid transparent;
+  font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; text-decoration: none; transition: background .15s, border-color .15s, transform .05s; }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible, .tab:focus-visible, input:focus-visible, .seg label:focus-within, summary:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { background: var(--accent-strong); }
+.btn-primary[disabled] { opacity: .65; cursor: progress; }
+.btn-ghost { background: var(--surface); border-color: var(--line); color: var(--text); }
+.btn-ghost:hover { border-color: var(--faint); }
+.btn-danger { background: transparent; border-color: var(--line); color: var(--danger); }
+.btn-danger:hover { background: var(--danger-soft); }
+.btn-block { width: 100%; }
+.btn-sm { padding: 9px 14px; font-size: 14px; border-radius: 10px; }
+
+/* section */
+section { padding: 64px 0; }
+.sec-title { font-size: clamp(24px, 3.4vw, 32px); letter-spacing: -0.03em; margin: 0 0 8px; text-align: center; font-weight: 800; }
+.sec-lead { color: var(--muted); text-align: center; margin: 0 0 36px; }
+
+/* card + form */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px; }
+.card + .card { margin-top: 16px; }
+.steps { display: flex; gap: 8px; margin-bottom: 24px; }
+.steps li { flex: 1; list-style: none; font-size: 13px; color: var(--faint); border-top: 3px solid var(--line); padding-top: 8px; }
+.steps li.on { color: var(--accent-strong); border-color: var(--accent); font-weight: 600; }
+.steps { padding: 0; margin-top: 0; }
+.card h3 { font-size: 20px; margin: 0 0 6px; letter-spacing: -0.02em; }
+.card .sub { color: var(--muted); font-size: 15px; margin: 0 0 22px; }
+.field { display: block; margin-bottom: 14px; }
+.field > span { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.input { position: relative; }
+.input input { width: 100%; padding: 13px 14px; font: inherit; font-size: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--text); }
+.input input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.reveal { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; padding: 6px 8px; cursor: pointer; border-radius: 8px; }
+.group { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 18px; }
+.group-title { font-size: 14px; font-weight: 600; margin: 0 0 10px; }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 0; font-size: 15px; cursor: pointer; }
+.switch small { display: block; color: var(--muted); font-size: 13px; }
+.switch input { appearance: none; -webkit-appearance: none; flex: none; width: 46px; height: 28px; border-radius: 999px; background: var(--line); position: relative; cursor: pointer; transition: background .15s; margin: 0; }
+.switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .15s; }
+.switch input:checked { background: var(--accent); }
+.switch input:checked::after { transform: translateX(18px); }
+.seg { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.seg label { position: relative; }
+.seg input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.seg span { display: block; text-align: center; padding: 9px 0; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; color: var(--muted); background: var(--bg); }
+.seg input:checked + span { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); font-weight: 600; }
+.hint { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+.error { color: var(--danger); font-size: 14px; margin: 12px 0 0; }
+.error:empty { display: none; }
+.privacy { display: flex; gap: 10px; font-size: 13px; color: var(--muted); background: var(--bg-soft); border-radius: 12px; padding: 12px 14px; margin-top: 18px; }
+.privacy b { color: var(--text); }
+
+/* connected summary */
+.summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.summary .who { display: flex; align-items: center; gap: 10px; font-weight: 600; min-width: 0; }
+.summary .who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ok-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); flex: none; }
+
+/* result */
+.urlbox { display: flex; gap: 8px; margin-bottom: 24px; }
+.urlbox input { flex: 1; min-width: 0; padding: 11px 12px; font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; border: 1px solid var(--line); border-radius: 12px; background: var(--code); color: var(--text); }
+.tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 18px; padding-bottom: 2px; scrollbar-width: none; }
+.tab { flex: none; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font: inherit; font-size: 14px; cursor: pointer; }
+.tab[aria-selected=true] { background: var(--text); border-color: var(--text); color: var(--bg); font-weight: 600; }
+.panel[hidden] { display: none; }
+.panel ol { padding-left: 20px; margin: 16px 0 0; color: var(--text); }
+.panel li { margin-bottom: 8px; }
+.panel li::marker { color: var(--faint); font-weight: 600; }
+.speed { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.speed b { color: var(--accent-strong); }
+.badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); }
+.manage { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.manage .btn { flex: 1; min-width: 150px; }
+
+/* features */
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.feature { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+.feature .ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-strong); margin-bottom: 14px; }
+.feature h4 { margin: 0 0 6px; font-size: 17px; letter-spacing: -0.01em; }
+.feature p { margin: 0; color: var(--muted); font-size: 15px; }
+
+/* faq */
+details { border-bottom: 1px solid var(--line); }
+summary { cursor: pointer; list-style: none; padding: 18px 4px; font-weight: 600; display: flex; justify-content: space-between; gap: 16px; border-radius: 8px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--faint); font-weight: 400; font-size: 20px; line-height: 1; }
+details[open] summary::after { content: "−"; }
+details p { margin: 0 4px 18px; color: var(--muted); }
+table.speeds { width: 100%; border-collapse: collapse; font-size: 14px; margin: 0 0 18px; }
+table.speeds td { padding: 8px 4px; border-top: 1px solid var(--line); color: var(--muted); }
+table.speeds td:first-child { color: var(--text); font-weight: 600; }
+
+footer { border-top: 1px solid var(--line); padding: 28px 0 40px; color: var(--faint); font-size: 13px; }
+footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+footer a { color: var(--muted); }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; gap: 36px; padding: 32px 0 48px; }
+  .preview { justify-self: stretch; max-width: none; }
+  .features { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+}
+@media (max-width: 480px) {
+  .wrap { padding: 0 16px; }
+  .card { padding: 22px 18px; }
+  .seg { grid-template-columns: repeat(3, 1fr); }
+  section { padding: 48px 0; }
+}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <nav aria-label="주요">
+    <a class="brand" href="/"><img src="/favicon.svg" alt="" width="28" height="28">투두메이트 캘린더</a>
+    <div class="nav-links"><a href="#how">동작 방식</a><a href="#faq">자주 묻는 질문</a><a href="#connect">연결하기</a></div>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <span class="eyebrow">📅 Apple · 삼성 · Google 캘린더</span>
+      <h1>투두메이트 할 일을<br><em>내 캘린더</em>에서 바로.</h1>
+      <p class="lead">한 번만 연결하면 투두메이트에 적은 할 일이 아이폰·맥·갤럭시 캘린더에 자동으로 떠요. 지난 할 일 기록까지 함께 볼 수 있어요.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#connect">무료로 연결하기</a>
+        <a class="btn btn-ghost" href="#how">어떻게 동작하나요?</a>
+      </div>
+      <div class="apps"><span>iPhone · iPad</span><span>Mac</span><span>Galaxy</span><span>Google Calendar</span></div>
+    </div>
+    <div class="preview" aria-hidden="true">
+      <div class="pv-head"><span class="pv-date" id="pv-date">11월 2일 월요일</span><span class="pv-cal">투두메이트</span></div>
+      <div class="pv-week" id="pv-week"></div>
+      <p class="pv-label">하루 종일</p>
+      <div class="ev done"><i style="background:var(--g4)"></i><span>✅ [운동] 아침 러닝 30분</span></div>
+      <div class="ev"><i style="background:var(--g1)"></i><span>[공부] 영단어 50개 외우기</span></div>
+      <div class="ev"><i style="background:var(--g3)"></i><span>[생활] 장보기 · 우유, 계란</span></div>
+      <p class="pv-label" style="margin-top:12px">알림 시간</p>
+      <div class="ev"><i style="background:var(--g2)"></i><span>[업무] 주간 회의 준비</span><span class="t">09:30</span></div>
+      <div class="ev"><i style="background:var(--g1)"></i><span>[공부] 알고리즘 문제 풀기</span><span class="t">21:00</span></div>
+    </div>
+  </div>
+
+  <section id="connect" style="background:var(--bg-soft)">
+    <div class="wrap narrow">
+      <h2 class="sec-title">1분이면 연결 끝</h2>
+      <p class="sec-lead">투두메이트 계정으로 로그인하고, 쓰는 기기에 맞춰 추가하세요.</p>
+
+      <div class="card" id="form-card">
+        <ol class="steps" aria-label="진행 단계"><li class="on" id="st1">1. 계정 연결</li><li id="st2">2. 캘린더에 추가</li><li id="st3">3. 자동 동기화</li></ol>
+
+        <div class="summary" id="summary" hidden>
+          <div class="who"><span class="ok-dot"></span><span id="summary-email"></span></div>
+          <button class="btn btn-ghost btn-sm" type="button" id="edit">설정 바꾸기</button>
+        </div>
+
+        <form id="form" novalidate>
+          <h3>투두메이트 계정 연결</h3>
+          <p class="sub">투두메이트 앱에서 쓰는 이메일과 비밀번호를 입력하세요.</p>
+          <label class="field"><span>이메일</span>
+            <div class="input"><input type="email" name="email" required autocomplete="username" inputmode="email" placeholder="todomate@example.com"></div>
+          </label>
+          <label class="field"><span>비밀번호</span>
+            <div class="input"><input type="password" name="password" id="password" required autocomplete="current-password" style="padding-right:64px">
+              <button class="reveal" type="button" id="reveal" aria-controls="password" aria-pressed="false">보기</button></div>
+          </label>
+
+          <div class="group">
+            <p class="group-title">캘린더 표시 설정</p>
+            <label class="switch"><span>목표 이름 붙이기<small>예: [운동] 아침 러닝 30분</small></span><input type="checkbox" name="showGoal" checked></label>
+            <label class="switch"><span>완료한 할 일 숨기기<small>끄면 ✅ 표시와 함께 보여요</small></span><input type="checkbox" name="hideDone"></label>
+          </div>
+
+          <div class="group">
+            <p class="group-title" id="history-label">지난 할 일 가져오기</p>
+            <div class="seg" role="radiogroup" aria-labelledby="history-label">
+              <label><input type="radio" name="historyDays" value="7"><span>1주</span></label>
+              <label><input type="radio" name="historyDays" value="30"><span>1개월</span></label>
+              <label><input type="radio" name="historyDays" value="90"><span>3개월</span></label>
+              <label><input type="radio" name="historyDays" value="180"><span>6개월</span></label>
+              <label><input type="radio" name="historyDays" value="365" checked><span>1년</span></label>
+              <label><input type="radio" name="historyDays" value="730"><span>2년</span></label>
+            </div>
+            <p class="hint">앞으로 60일 일정은 항상 포함돼요. 기간이 길수록 캘린더 앱이 불러오는 데 조금 더 걸려요.</p>
+          </div>
+
+          <button class="btn btn-primary btn-block" type="submit" id="submit" style="margin-top:22px">캘린더 연결하기</button>
+          <p class="error" id="error" role="alert" aria-live="assertive"></p>
+          <div class="privacy"><span aria-hidden="true">🔒</span><span><b>비밀번호는 저장하지 않아요.</b> 로그인할 때 한 번만 쓰고, 받은 접근 토큰은 암호화해서 보관해요. 투두메이트 데이터는 읽기만 하고 절대 수정하지 않아요.</span></div>
+        </form>
+      </div>
+
+      <div class="card" id="result" hidden>
+        <h3>캘린더에 추가하기</h3>
+        <p class="sub">아래 주소가 내 전용 캘린더예요. <b>다른 사람과 공유하지 마세요.</b></p>
+        <div class="urlbox">
+          <input id="feed-url" readonly aria-label="내 구독 캘린더 주소">
+          <button class="btn btn-ghost btn-sm" type="button" id="copy">복사</button>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="기기 선택">
+          <button class="tab" role="tab" id="tab-ios" aria-controls="panel-ios" data-tab="ios">아이폰·아이패드</button>
+          <button class="tab" role="tab" id="tab-mac" aria-controls="panel-mac" data-tab="mac">맥</button>
+          <button class="tab" role="tab" id="tab-galaxy" aria-controls="panel-galaxy" data-tab="galaxy">갤럭시</button>
+          <button class="tab" role="tab" id="tab-google" aria-controls="panel-google" data-tab="google">구글 캘린더</button>
+        </div>
+
+        <div class="panel" role="tabpanel" id="panel-ios" aria-labelledby="tab-ios" data-panel="ios">
+          <a class="btn btn-primary btn-block webcal" href="#">Apple 캘린더에 구독 추가</a>
+          <ol>
+            <li>버튼을 누르고 <b>구독</b> → <b>추가</b>를 누르세요.</li>
+            <li>버튼이 안 되면 <b>설정 › 앱 › 캘린더 › 캘린더 계정 › 계정 추가 › 기타 › 구독 캘린더 추가</b>에 주소를 붙여 넣으세요.</li>
+            <li>캘린더 앱 아래쪽 <b>캘린더</b> 화면을 아래로 당기면 바로 새로고침돼요.</li>
+          </ol>
+          <span class="speed">반영 속도 <b>iOS가 자동으로 (보통 수십 분 이내)</b></span>
+        </div>
+
+        <div class="panel" role="tabpanel" id="panel-mac" aria-labelledby="tab-mac" data-panel="mac" hidden>
+          <a class="btn btn-primary btn-block webcal" href="#">Apple 캘린더에 구독 추가</a>
+          <ol>
+            <li>버튼을 누르면 캘린더 앱이 열려요. 또는 메뉴 <b>파일 › 새로운 캘린더 구독…</b>에 주소를 붙여 넣으세요.</li>
+            <li><b>자동 새로고침</b>을 <b>5분마다</b>로 설정하세요.</li>
+            <li>위치를 <b>iCloud</b>로 고르면 같은 Apple 계정의 아이폰에도 함께 나타나요.</li>
+          </ol>
+          <span class="speed">반영 속도 <b>약 5분</b></span>
+        </div>
+
+        <div class="panel" role="tabpanel" id="panel-galaxy" aria-labelledby="tab-galaxy" data-panel="galaxy" hidden>
+          <a class="btn btn-primary btn-block webcal" href="#">ICSx⁵로 구독 추가 <span class="badge">추천</span></a>
+          <ol>
+            <li>Play 스토어에서 무료 앱 <a href="https://play.google.com/store/apps/details?id=at.bitfire.icsdroid" target="_blank" rel="noopener"><b>ICSx⁵</b></a>를 설치하세요.</li>
+            <li>위 버튼을 누르거나, ICSx⁵에서 <b>+</b> → 주소 붙여 넣기 → <b>추가</b>.</li>
+            <li>ICSx⁵ 설정에서 동기화 간격을 <b>15분</b>으로 바꾸세요.</li>
+            <li><b>삼성 캘린더 › ☰ › 캘린더 관리</b>에서 "투두메이트"를 켜면 끝!</li>
+          </ol>
+          <span class="speed">반영 속도 <b>약 15분</b></span>
+        </div>
+
+        <div class="panel" role="tabpanel" id="panel-google" aria-labelledby="tab-google" data-panel="google" hidden>
+          <a class="btn btn-primary btn-block" id="google" href="#" target="_blank" rel="noopener">Google 캘린더에 추가</a>
+          <ol>
+            <li>PC 브라우저에서 버튼을 누르고 <b>추가</b>를 누르세요.</li>
+            <li>같은 구글 계정을 쓰는 휴대폰 캘린더에도 표시돼요.</li>
+          </ol>
+          <span class="speed">반영 속도 <b>몇 시간~하루</b> · 빠른 반영이 필요하면 갤럭시 탭 방법을 쓰세요</span>
+        </div>
+      </div>
+
+      <div class="card" id="manage" hidden>
+        <h3>연결 관리</h3>
+        <p class="sub" id="expiry"></p>
+        <div class="manage">
+          <button class="btn btn-ghost" type="button" id="rotate">주소 새로 발급</button>
+          <button class="btn btn-danger" type="button" id="disconnect">연결 해제</button>
+        </div>
+        <p class="hint">주소가 다른 사람에게 노출됐다면 새로 발급하세요. 기존 주소는 바로 막히고, 캘린더 앱에 새 주소를 다시 추가해야 해요.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <h2 class="sec-title">이렇게 동작해요</h2>
+      <p class="sec-lead">캘린더 앱이 주기적으로 내 투두메이트 캘린더를 새로 받아 와요.</p>
+      <div class="features">
+        <div class="feature"><div class="ic" aria-hidden="true">🔄</div><h4>자동 동기화</h4><p>투두메이트에서 할 일을 추가·완료·수정하면 다음 새로고침 때 캘린더에도 그대로 반영돼요.</p></div>
+        <div class="feature"><div class="ic" aria-hidden="true">🗂️</div><h4>지난 기록까지</h4><p>최대 2년 전 할 일까지 불러와요. 알림 시간이 있는 할 일은 그 시각에, 나머지는 하루 종일 일정으로 보여요.</p></div>
+        <div class="feature"><div class="ic" aria-hidden="true">🔒</div><h4>읽기 전용 · 안전</h4><p>비밀번호는 저장하지 않고, 투두메이트 데이터는 읽기만 해요. 언제든 연결을 해제할 수 있어요.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" style="padding-top:16px">
+    <div class="wrap narrow">
+      <h2 class="sec-title">자주 묻는 질문</h2>
+      <p class="sec-lead">궁금한 점이 더 있다면 GitHub에 남겨 주세요.</p>
+      <details><summary>투두메이트에서 바꾼 내용은 얼마나 빨리 반영되나요?</summary>
+        <p>구독 캘린더는 캘린더 앱이 정해진 주기로 새로 받아 오는 방식이라, 푸시 알림처럼 즉시 바뀌지는 않아요.</p>
+        <table class="speeds"><tbody>
+          <tr><td>맥</td><td>자동 새로고침 5분 설정 시 약 5분</td></tr>
+          <tr><td>갤럭시 (ICSx⁵)</td><td>약 15분</td></tr>
+          <tr><td>아이폰·아이패드</td><td>iOS가 자동 결정 · 당겨서 새로고침 가능</td></tr>
+          <tr><td>구글 캘린더</td><td>몇 시간~하루</td></tr>
+        </tbody></table>
+      </details>
+      <details><summary>비밀번호는 안전한가요?</summary>
+        <p>비밀번호는 저장하지 않아요. 로그인할 때 한 번만 투두메이트(Firebase) 로그인에 쓰고, 받은 접근 토큰만 암호화해서 보관해요. 토큰은 브라우저나 캘린더 주소에 들어가지 않아요.</p></details>
+      <details><summary>캘린더에서 일정을 고치면 투두메이트에도 반영되나요?</summary>
+        <p>아니요. 구독 캘린더는 읽기 전용이에요. 할 일은 투두메이트 앱에서 바꿔 주세요.</p></details>
+      <details><summary>다시 연결해야 할 때가 있나요?</summary>
+        <p>보안을 위해 연결은 90일 동안 유지돼요. 만료 3일 전부터 캘린더에 알림 일정이 생기고, 이 페이지에서 다시 연결하면 같은 주소로 계속 이어져요. 투두메이트 비밀번호를 바꾼 경우에도 다시 연결해 주세요.</p></details>
+      <details><summary>연결을 끊고 싶어요.</summary>
+        <p>위 연결 관리에서 <b>연결 해제</b>를 누르고, 캘린더 앱에서 구독 캘린더도 삭제하세요. 저장된 토큰은 바로 삭제돼요.</p></details>
+      <details><summary>투두메이트 공식 서비스인가요?</summary>
+        <p>아니요. 오픈소스로 만든 개인 프로젝트이고, 비공식 <a href="https://github.com/eheka78/todomate-api" target="_blank" rel="noopener">todomate-api</a>를 사용해요. 투두메이트가 내부 구조를 바꾸면 잠시 동작하지 않을 수 있어요.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>투두메이트 캘린더 · 투두메이트 공식 서비스가 아니에요</span>
+    <span><a href="https://github.com/eheka78/todomate-api" target="_blank" rel="noopener">todomate-api</a></span>
+  </div>
+</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+  const form = $("#form"), errorEl = $("#error"), submit = $("#submit");
+  const STORE_KEY = "todomate-calendar:v1";
+  const storage = {
+    get() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || "null"); } catch { return null; } },
+    set(v) { try { localStorage.setItem(STORE_KEY, JSON.stringify(v)); } catch {} },
+    clear() { try { localStorage.removeItem(STORE_KEY); } catch {} },
+  };
+
+  // preview: this week, today highlighted
+  (() => {
+    const now = new Date(), days = ["일", "월", "화", "수", "목", "금", "토"];
+    $("#pv-date").textContent = (now.getMonth() + 1) + "월 " + now.getDate() + "일 " + days[now.getDay()] + "요일";
+    const start = new Date(now); start.setDate(now.getDate() - now.getDay());
+    $("#pv-week").innerHTML = days.map((d, i) => {
+      const day = new Date(start); day.setDate(start.getDate() + i);
+      return '<div class="' + (i === now.getDay() ? "on" : "") + '">' + d + "<b>" + day.getDate() + "</b></div>";
+    }).join("");
+  })();
+
+  // device tabs
+  const ua = navigator.userAgent;
+  const isIpad = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+  const defaultTab = /iPhone|iPad|iPod/.test(ua) || isIpad ? "ios" : /Android/.test(ua) ? "galaxy" : /Macintosh/.test(ua) ? "mac" : "ios";
+  const selectTab = (name) => {
+    $$(".tab").forEach((t) => { const on = t.dataset.tab === name; t.setAttribute("aria-selected", String(on)); t.tabIndex = on ? 0 : -1; });
+    $$(".panel").forEach((p) => { p.hidden = p.dataset.panel !== name; });
+  };
+  $$(".tab").forEach((t, i, all) => {
+    t.addEventListener("click", () => selectTab(t.dataset.tab));
+    t.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      const next = all[(i + (e.key === "ArrowRight" ? 1 : all.length - 1)) % all.length];
+      next.focus(); selectTab(next.dataset.tab);
+    });
+  });
+  selectTab(defaultTab);
+
+  // password reveal
+  $("#reveal").addEventListener("click", () => {
+    const input = $("#password"), show = input.type === "password";
+    input.type = show ? "text" : "password";
+    $("#reveal").textContent = show ? "숨기기" : "보기";
+    $("#reveal").setAttribute("aria-pressed", String(show));
+  });
+
+  const toast = (msg) => { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2200); };
+
+  const payload = (extra) => {
+    const d = new FormData(form);
+    return { email: String(d.get("email") || "").trim(), password: String(d.get("password") || ""),
+      showGoal: d.get("showGoal") === "on", hideDone: d.get("hideDone") === "on",
+      historyDays: Number(d.get("historyDays") || 365), ...extra };
+  };
+
+  function validate() {
+    const { email, password } = payload({});
+    if (!email || !/^[^\s@]+@[^\s@]+$/.test(email)) return "이메일을 확인해 주세요.";
+    if (!password) return "비밀번호를 입력해 주세요.";
+    return "";
+  }
+
+  async function call(path, body, busyText, button) {
+    errorEl.textContent = "";
+    const invalid = validate();
+    if (invalid) { showForm(); errorEl.textContent = invalid; return null; }
+    const btn = button || submit, label = btn.textContent;
+    btn.disabled = true; btn.textContent = busyText;
+    try {
+      const res = await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { showForm(); errorEl.textContent = data.error || "문제가 생겼어요. 잠시 후 다시 시도해 주세요."; return null; }
+      return data;
+    } catch { showForm(); errorEl.textContent = "인터넷 연결을 확인해 주세요."; return null; }
+    finally { btn.disabled = false; btn.textContent = label; }
+  }
+
+  function showForm() { form.hidden = false; $("#summary").hidden = true; }
+  function setSteps(n) { ["#st1", "#st2", "#st3"].forEach((s, i) => $(s).classList.toggle("on", i < n)); }
+
+  function show(data, email, scroll) {
+    $("#feed-url").value = data.feedUrl;
+    $$(".webcal").forEach((a) => { a.href = data.webcalUrl; });
+    $("#google").href = data.googleUrl;
+    const until = new Date(data.expiresAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
+    $("#expiry").textContent = "연결은 " + until + "까지 유지돼요. 만료 전에 캘린더에 알림 일정이 생기고, 여기서 다시 연결하면 같은 주소로 이어져요.";
+    $("#summary-email").textContent = email + " 연결됨";
+    form.hidden = true; $("#summary").hidden = false;
+    $("#result").hidden = false; $("#manage").hidden = false;
+    submit.textContent = "설정 저장하기";
+    setSteps(2);
+    if (scroll) $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function hideResult() {
+    $("#result").hidden = true; $("#manage").hidden = true; showForm();
+    submit.textContent = "캘린더 연결하기"; setSteps(1);
+  }
+
+  // restore this device's last connection (no password is ever stored)
+  const saved = storage.get();
+  if (saved && saved.feedUrl && saved.expiresAt > Date.now()) {
+    form.elements.email.value = saved.email || "";
+    if (saved.options) {
+      form.elements.showGoal.checked = saved.options.showGoal !== false;
+      form.elements.hideDone.checked = saved.options.hideDone === true;
+      const radio = form.querySelector('input[name=historyDays][value="' + saved.options.historyDays + '"]');
+      if (radio) radio.checked = true;
+    }
+    show(saved, saved.email || "", false);
+  }
+
+  $("#edit").addEventListener("click", () => { showForm(); form.elements.password.focus(); });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const body = payload({});
+    const data = await call("/api/connect", body, "연결하는 중…");
+    if (!data) return;
+    storage.set({ ...data, email: body.email });
+    show(data, body.email, true);
+    toast(data.reused ? "설정을 저장했어요. 주소는 그대로예요." : "연결됐어요! 캘린더 앱에 추가해 주세요.");
+  });
+
+  $("#rotate").addEventListener("click", async () => {
+    if (!form.elements.password.value) { showForm(); errorEl.textContent = "주소를 새로 발급하려면 비밀번호를 다시 입력해 주세요."; form.elements.password.focus(); return; }
+    if (!confirm("기존 주소는 더 이상 동작하지 않아요. 새 주소를 발급할까요?")) return;
+    const body = payload({ rotate: true });
+    const data = await call("/api/connect", body, "발급하는 중…", $("#rotate"));
+    if (!data) return;
+    storage.set({ ...data, email: body.email });
+    show(data, body.email, true);
+    toast("새 주소를 발급했어요. 캘린더 앱에 다시 추가해 주세요.");
+  });
+
+  $("#disconnect").addEventListener("click", async () => {
+    if (!form.elements.password.value) { showForm(); errorEl.textContent = "연결을 해제하려면 비밀번호를 다시 입력해 주세요."; form.elements.password.focus(); return; }
+    if (!confirm("연결을 해제하면 캘린더에 더 이상 할 일이 표시되지 않아요. 계속할까요?")) return;
+    const data = await call("/api/disconnect", payload({}), "해제하는 중…", $("#disconnect"));
+    if (!data) return;
+    storage.clear(); hideResult();
+    toast("연결을 해제했어요. 캘린더 앱의 구독도 삭제해 주세요.");
+  });
+
+  $("#copy").addEventListener("click", async () => {
+    const input = $("#feed-url");
+    try { await navigator.clipboard.writeText(input.value); } catch { input.select(); document.execCommand("copy"); }
+    toast("주소를 복사했어요");
+  });
+})();
+</script>
+</body>
+</html>

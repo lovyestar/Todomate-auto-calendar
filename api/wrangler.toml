@@ -1,0 +1,23 @@
+name = "todomate-api"
+main = "src/worker.ts"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+
+routes = [
+  { pattern = "todomate-api.yestar.dev", custom_domain = true }
+]
+
+[vars]
+# Only the calendar site calls this API from a browser context (it actually uses a
+# service binding server-side), so CORS is limited to it.
+CORS_ORIGIN = "https://todomate.yestar.dev"
+SESSION_TTL_DAYS = "90"
+TODOMATE_ENABLE_SOCIAL_WRITES = "false"
+
+# Secrets (set with `wrangler secret put`):
+#   TODOMATE_FIREBASE_API_KEY  public Firebase web API key of the Todomate web app
+#   SESSION_ENCRYPTION_KEY     openssl rand -hex 32
+
+[observability]
+enabled = true
